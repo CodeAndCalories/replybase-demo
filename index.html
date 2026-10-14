@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ReplyBase — Demo</title>
+<meta name="description" content="ReplyBase drafted AI replies to Google Business reviews. Interactive portfolio demo with sample data.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#050505; --surface:#0D0D0D; --surface-2:#141414; --border:rgba(255,255,255,.08);
+    --border-strong:rgba(255,255,255,.14); --text:#F0F0F0; --muted:#8A8F98; --dim:#5C6169;
+    --mint:#00E5CC; --mint-soft:rgba(0,229,204,.10); --mint-line:rgba(0,229,204,.28);
+    --star:#FBBF24; --red:#F87171; --red-soft:rgba(248,113,113,.10); --amber:#F5B544;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  #demo,#how{scroll-margin-top:72px}
+  body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,sans-serif;
+       font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  a{color:inherit}
+  button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+
+  /* top bar */
+  .top{position:sticky;top:0;z-index:20;background:rgba(5,5,5,.85);backdrop-filter:blur(12px);
+       -webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+  .top .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
+  .logo{font-weight:700;letter-spacing:-.02em;font-size:17px}
+  .logo span{color:var(--mint)}
+  .pill{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;letter-spacing:.04em;
+        text-transform:uppercase;color:var(--mint);border:1px solid var(--mint-line);border-radius:999px;padding:5px 11px}
+  .pill::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--mint)}
+
+  /* hero */
+  .hero{padding-top:72px;padding-bottom:40px}
+  .hero h1{font-size:clamp(38px,6vw,64px);line-height:1.04;letter-spacing:-.035em;font-weight:800;max-width:760px;margin-top:20px}
+  .hero p{color:var(--muted);font-size:17px;max-width:600px;margin-top:20px}
+  .hero .cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:32px}
+  .btn{display:inline-flex;align-items:center;gap:8px;border-radius:999px;font-weight:600;font-size:14px;
+       padding:12px 22px;text-decoration:none;transition:filter .15s, background .15s, border-color .15s}
+  .btn-mint{background:var(--mint);color:#04120F}
+  .btn-mint:hover{filter:brightness(1.08)}
+  .btn-ghost{border:1px solid var(--border-strong)}
+  .btn-ghost:hover{background:rgba(255,255,255,.05)}
+  .notice{margin-top:28px;font-size:13px;color:var(--dim)}
+
+  /* app frame */
+  .frame{margin:24px 0 80px;border:1px solid var(--border);border-radius:16px;background:var(--surface);
+         box-shadow:0 30px 80px rgba(0,0,0,.55);overflow:hidden}
+  .chrome{display:flex;align-items:center;gap:7px;height:40px;padding:0 14px;border-bottom:1px solid var(--border);background:#0A0A0A}
+  .chrome i{width:10px;height:10px;border-radius:50%;display:block}
+  .chrome .url{margin-left:14px;font-size:12px;color:var(--dim);font-family:ui-monospace,Menlo,monospace}
+  .app{display:grid;grid-template-columns:210px 1fr;min-height:620px}
+  .side{border-right:1px solid var(--border);padding:18px 12px;display:flex;flex-direction:column;gap:4px}
+  .side .label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);padding:4px 10px 8px}
+  .nav{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;color:var(--muted);font-size:14px;font-weight:500;text-align:left;width:100%}
+  .nav:hover{background:rgba(255,255,255,.04);color:var(--text)}
+  .nav[aria-current="true"]{background:var(--mint-soft);color:var(--text);box-shadow:inset 2px 0 0 var(--mint)}
+  .nav svg{width:16px;height:16px;flex:none}
+  .nav .count{margin-left:auto;font-size:11px;font-weight:700;background:var(--mint);color:#04120F;border-radius:999px;padding:1px 7px}
+  .side .user{margin-top:auto;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:12px;color:var(--muted)}
+  .side .user b{display:block;color:var(--text);font-weight:600;font-size:13px}
+  .main{padding:28px;min-width:0}
+  .eyebrow{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mint)}
+  .h2{font-size:24px;font-weight:700;letter-spacing:-.02em;margin-top:4px}
+  .sub{color:var(--muted);font-size:13px;margin-top:2px}
+  .head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .stat{border:1px solid var(--border);border-radius:12px;padding:16px;background:var(--surface-2)}
+  .stat .k{font-size:12px;color:var(--muted)}
+  .stat .v{font-size:28px;font-weight:700;letter-spacing:-.02em;margin-top:6px}
+
+  .card{border:1px solid var(--border);border-radius:12px;background:var(--surface-2)}
+  .card-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border);font-weight:600;font-size:14px}
+  .linkbtn{color:var(--mint);font-size:13px;font-weight:600}
+  .row{display:flex;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border);align-items:flex-start}
+  .row:last-child{border-bottom:0}
+  .avatar{width:34px;height:34px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:700;font-size:13px;
+          background:var(--mint-soft);color:var(--mint)}
+  .avatar.low{background:var(--red-soft);color:var(--red)}
+  .who{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .who b{font-weight:600;font-size:14px}
+  .stars{color:var(--star);font-size:12px;letter-spacing:1px}
+  .stars .off{color:#3A3D42}
+  .date{color:var(--dim);font-size:12px;margin-left:auto;white-space:nowrap}
+  .txt{color:#C9CDD3;font-size:14px;margin-top:6px}
+  .clip{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .badge{font-size:11px;font-weight:600;border-radius:999px;padding:2px 9px;white-space:nowrap}
+  .b-pending{background:rgba(245,181,68,.12);color:var(--amber)}
+  .b-sent{background:var(--mint-soft);color:var(--mint)}
+
+  .tabs{display:flex;gap:6px}
+  .tab{border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:13px;color:var(--muted)}
+  .tab[aria-pressed="true"]{border-color:var(--mint-line);background:var(--mint-soft);color:var(--text)}
+  .list{display:flex;flex-direction:column;gap:12px}
+  .review{padding:18px}
+  .draft{margin-top:14px;border:1px solid var(--mint-line);border-radius:10px;background:rgba(0,229,204,.04);padding:14px}
+  .draft.posted{border-color:var(--border);background:rgba(255,255,255,.02)}
+  .draft .lbl{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mint);margin-bottom:8px;display:flex;gap:8px;align-items:center}
+  .draft.posted .lbl{color:var(--muted)}
+  textarea{width:100%;min-height:96px;resize:vertical;background:#0A0A0A;border:1px solid var(--border);border-radius:8px;
+           color:var(--text);font:inherit;font-size:14px;padding:10px 12px;line-height:1.55}
+  textarea:focus{outline:none;border-color:var(--mint-line)}
+  .actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .sbtn{border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600}
+  .sbtn.mint{background:var(--mint);color:#04120F}
+  .sbtn.mint:hover{filter:brightness(1.08)}
+  .sbtn.ghost{border:1px solid var(--border-strong);color:var(--muted)}
+  .sbtn.ghost:hover{color:var(--text);background:rgba(255,255,255,.04)}
+  .sbtn:disabled{opacity:.5;cursor:default}
+  .caret::after{content:"▍";color:var(--mint);animation:blink 1s steps(2) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .empty{padding:40px;text-align:center;color:var(--muted);font-size:14px}
+
+  .biz{display:flex;gap:16px;align-items:center;padding:20px;flex-wrap:wrap}
+  .biz .icon{width:44px;height:44px;border-radius:10px;background:#fff;display:grid;place-items:center;flex:none}
+  .biz .meta{flex:1;min-width:200px}
+  .biz .meta b{font-size:16px}
+  .live{display:inline-flex;align-items:center;gap:6px;color:#4ADE80;font-size:12px;font-weight:600}
+  .live::before{content:"";width:7px;height:7px;border-radius:50%;background:#4ADE80;animation:pulse 2s ease-in-out infinite}
+  @keyframes pulse{50%{opacity:.35}}
+  .spin{display:inline-block;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .set{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 18px;border-bottom:1px solid var(--border)}
+  .set:last-child{border-bottom:0}
+  .set b{font-weight:600;font-size:14px;display:block}
+  .set small{color:var(--muted);font-size:12px}
+  select{background:#0A0A0A;color:var(--text);border:1px solid var(--border-strong);border-radius:8px;padding:8px 10px;font:inherit;font-size:13px}
+  .toggle{width:42px;height:24px;border-radius:999px;background:#2A2D31;position:relative;flex:none;transition:background .15s}
+  .toggle::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .15s}
+  .toggle[aria-checked="true"]{background:var(--mint)}
+  .toggle[aria-checked="true"]::after{transform:translateX(18px)}
+  .meter{width:140px;height:6px;border-radius:999px;background:#2A2D31;overflow:hidden}
+  .meter i{display:block;height:100%;background:var(--mint)}
+
+  /* how it worked */
+  section.how{padding-top:20px;padding-bottom:90px}
+  .how h2{font-size:32px;letter-spacing:-.025em;font-weight:700;margin-top:6px}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:28px}
+  .step{border:1px solid var(--border);border-radius:14px;padding:22px;background:var(--surface)}
+  .step .n{font-size:44px;font-weight:800;color:var(--mint);opacity:.2;line-height:1}
+  .step h3{font-size:17px;margin-top:10px}
+  .step p{color:var(--muted);font-size:14px;margin-top:6px}
+  .stack{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+  .chip{border:1px solid var(--border);border-radius:999px;padding:6px 12px;font-size:13px;color:#C9CDD3;background:var(--surface)}
+  footer{border-top:1px solid var(--border);padding:28px 0;color:var(--dim);font-size:13px}
+
+  .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);opacity:0;pointer-events:none;
+         background:#111;border:1px solid var(--mint-line);color:var(--text);padding:11px 16px;border-radius:10px;font-size:14px;
+         box-shadow:0 10px 30px rgba(0,0,0,.5);transition:opacity .2s, transform .2s;z-index:50}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  @media (max-width:860px){
+    .app{grid-template-columns:1fr}
+    .side{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--border);padding:10px;gap:6px}
+    .side .label,.side .user{display:none}
+    .nav{width:auto;white-space:nowrap}
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .steps{grid-template-columns:1fr}
+    .main{padding:18px}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="logo">Reply<span>Base</span></div>
+    <span class="pill">Portfolio demo</span>
+  </div>
+</header>
+
+<main>
+  <section class="hero wrap">
+    <span class="pill">AI review replies for local businesses</span>
+    <h1>Every Google review, answered in seconds.</h1>
+    <p>ReplyBase connected to a business's Google Business Profile, pulled in new reviews, drafted on-brand replies with Claude, and posted them back with one click.</p>
+    <div class="cta">
+      <a class="btn btn-mint" href="#demo">Try the demo ↓</a>
+      <a class="btn btn-ghost" href="#how">How it worked</a>
+    </div>
+    <p class="notice">ReplyBase is no longer accepting customers. Everything below runs in your browser with sample data — nothing is posted anywhere.</p>
+  </section>
+
+  <div class="wrap" id="demo">
+    <div class="frame" role="region" aria-label="Interactive ReplyBase demo">
+      <div class="chrome" aria-hidden="true">
+        <i style="background:#FF5F57"></i><i style="background:#FEBC2E"></i><i style="background:#28C840"></i>
+        <span class="url">app.replybase / <span id="crumb">dashboard</span></span>
+      </div>
+      <div class="app">
+        <nav class="side" aria-label="Demo sections">
+          <div class="label">Menu</div>
+          <button class="nav" data-view="overview" aria-current="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            Dashboard</button>
+          <button class="nav" data-view="reviews">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+            Reviews <span class="count" id="navCount"></span></button>
+          <button class="nav" data-view="businesses">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10l9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
+            Businesses</button>
+          <button class="nav" data-view="settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+            Settings</button>
+          <div class="user"><b>Elena Ruiz</b>Copperleaf Kitchen · sample</div>
+        </nav>
+        <div class="main" id="view" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+
+  <section class="how wrap" id="how">
+    <div class="eyebrow">How it worked</div>
+    <h2>From review to reply in three steps</h2>
+    <div class="steps">
+      <div class="step"><div class="n">01</div><h3>Connect Google</h3><p>Owners signed in with Google OAuth and picked their Business Profile. Reviews synced on connect and on a schedule after that.</p></div>
+      <div class="step"><div class="n">02</div><h3>AI drafts the reply</h3><p>Each review went to Claude with the business name, rating and chosen tone, under guardrails: no invented facts, no promises, no competitor names.</p></div>
+      <div class="step"><div class="n">03</div><h3>Approve or auto-send</h3><p>Owners edited and approved drafts from the dashboard, or switched on auto-reply. Replies posted straight back to Google.</p></div>
+    </div>
+    <div class="stack" aria-label="Tech stack">
+      <span class="chip">Next.js 14 App Router</span><span class="chip">Supabase · Postgres + RLS</span>
+      <span class="chip">Google Business Profile API</span><span class="chip">Anthropic Claude Haiku</span>
+      <span class="chip">Stripe subscriptions</span><span class="chip">Resend email</span><span class="chip">Vercel cron</span>
+    </div>
+  </section>
+</main>
+
+<footer><div class="wrap">© 2026 ReplyBase</div></footer>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+  var reviews = [
+    {id:1,name:"Marcus Bell",rating:5,date:"Aug 10, 2026",status:"pending",
+     text:"Came in for brunch on Saturday without a reservation and they still had us seated in ten minutes. The short rib hash was the best thing I've eaten all month, and our server Dani checked on us without hovering. Already planning the next visit.",
+     reply:"Thanks for the great review, Marcus — glad the wait was short and the short rib hash lived up to it. I'll pass your note along to Dani, she'll be happy to hear it. See you on the next visit."},
+    {id:2,name:"Priya Raghunathan",rating:4,date:"Aug 9, 2026",status:"pending",
+     text:"Food was excellent and the patio is lovely in the evening. The only knock is that it took a while for our drinks to come out — the bar looked slammed. Would still come back.",
+     reply:"Thanks for the kind words, Priya — the patio is our favorite spot too. You're right that the bar got backed up that night; we've added a second bartender on weekends to keep drinks moving. Hope to see you again soon."},
+    {id:3,name:"Dana Whitfield",rating:2,date:"Aug 8, 2026",status:"pending",
+     text:"Booked a table for my mom's birthday at 7pm and we weren't seated until 7:40 with no update from the host stand. The food was fine once it arrived, but the evening felt rushed after that.",
+     reply:"Dana, I'm sorry. A 40-minute wait on a reservation isn't acceptable, and at minimum we should have kept you updated. I've gone through this with the host team so delays get communicated. If you'd like to give us another shot, ask for me at the host stand and I'll take care of your mom's birthday properly. — Elena, GM"},
+    {id:4,name:"Tom Okafor",rating:5,date:"Aug 7, 2026",status:"replied",
+     text:"Second time here and the kitchen is consistent, which is rarer than it should be. The carbonara was perfect and they split the check four ways without any attitude.",
+     reply:"Thanks, Tom — consistency is the thing we work hardest at, so that's good to hear. Glad the carbonara hit. See you for round three."},
+    {id:5,name:"Sara Lindqvist",rating:5,date:"Aug 5, 2026",status:"replied",
+     text:"Great gluten-free options that actually taste like the real thing. The staff double-checked with the kitchen about cross-contact without me having to ask twice.",
+     reply:"Thank you, Sara — our team takes cross-contact seriously, so I'm glad that came through. We'll keep growing the gluten-free side of the menu."}
+  ];
+  var BASE_TOTAL = 47, BASE_REPLIED = 42; // sample history beyond the five shown
+  var state = {view:"overview", filter:"all", drafts:{}, typing:{}, autoReply:false, tone:"Professional", syncing:false, synced:"3h ago", used:31};
+  var view = document.getElementById("view");
+
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+  function stars(n){var s="";for(var i=1;i<=5;i++)s+= i<=n?"★":'<span class="off">★</span>';return '<span class="stars" aria-label="'+n+' out of 5 stars">'+s+"</span>";}
+  function initials(n){return n.split(" ").map(function(p){return p[0];}).join("").slice(0,2);}
+  function pending(){return reviews.filter(function(r){return r.status==="pending";});}
+  function toast(msg){var t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(toast._t);toast._t=setTimeout(function(){t.classList.remove("show");},2400);}
+
+  function header(eyebrow,title,sub,right){
+    return '<div class="head"><div><div class="eyebrow">'+eyebrow+'</div><div class="h2">'+title+'</div>'+(sub?'<div class="sub">'+sub+'</div>':"")+'</div>'+(right||"")+'</div>';
+  }
+
+  function renderOverview(){
+    var p=pending().length, replied=BASE_REPLIED+(5-p)-2;
+    var rate=Math.round(replied/BASE_TOTAL*100);
+    var stats=[["Total reviews",BASE_TOTAL],["Pending replies",p],["Response rate",rate+"%"],["Businesses",1]];
+    var rows=reviews.slice(0,4).map(function(r){
+      return '<div class="row"><div class="avatar'+(r.rating<=2?" low":"")+'">'+initials(r.name)+'</div><div style="flex:1;min-width:0">'+
+        '<div class="who"><b>'+esc(r.name)+'</b>'+stars(r.rating)+'<span class="badge '+(r.status==="pending"?"b-pending":"b-sent")+'">'+(r.status==="pending"?"Needs reply":"Replied")+'</span><span class="date">'+r.date+'</span></div>'+
+        '<div class="txt clip">'+esc(r.text)+'</div></div></div>';
+    }).join("");
+    return header("Overview","Good morning, Elena","Copperleaf Kitchen · last synced "+state.synced)+
+      '<div class="stats">'+stats.map(function(s){return '<div class="stat"><div class="k">'+s[0]+'</div><div class="v">'+s[1]+'</div></div>';}).join("")+'</div>'+
+      '<div class="card" style="margin-top:16px"><div class="card-head">Recent reviews<button class="linkbtn" data-go="reviews">View all →</button></div>'+rows+'</div>';
+  }
+
+  function reviewCard(r){
+    var low=r.rating<=2, top='<div class="who"><div class="avatar'+(low?" low":"")+'">'+initials(r.name)+'</div><b>'+esc(r.name)+'</b>'+stars(r.rating)+
+      (r.status==="replied"?'<span class="badge b-sent">✓ Sent</span>':"")+'<span class="date">'+r.date+'</span></div>'+
+      '<div class="txt">'+esc(r.text)+'</div>';
+    var body="";
+    if(r.status==="replied"){
+      body='<div class="draft posted"><div class="lbl">Reply posted to Google</div><div class="txt" style="margin:0">'+esc(r.reply)+'</div></div>';
+    } else if(state.typing[r.id]!==undefined){
+      body='<div class="draft"><div class="lbl">✦ Drafting · '+state.tone+'</div><div class="txt caret" style="margin:0" id="type-'+r.id+'">'+esc(state.typing[r.id])+'</div></div>';
+    } else if(state.drafts[r.id]!==undefined){
+      body='<div class="draft"><div class="lbl">✦ AI reply draft · '+state.tone+'</div>'+
+        '<textarea id="ta-'+r.id+'" aria-label="Reply to '+esc(r.name)+'">'+esc(state.drafts[r.id])+'</textarea>'+
+        '<div class="actions"><button class="sbtn mint" data-send="'+r.id+'">Approve &amp; Send</button><button class="sbtn ghost" data-gen="'+r.id+'">Regenerate</button></div></div>';
+    } else {
+      body='<div class="actions"><button class="sbtn mint" data-gen="'+r.id+'">✦ Generate reply</button></div>';
+    }
+    return '<div class="card review">'+top+body+'</div>';
+  }
+
+  function renderReviews(){
+    var f=state.filter, list=reviews.filter(function(r){return f==="all"||(f==="pending"?r.status==="pending":r.status==="replied");});
+    var tabs='<div class="tabs" role="group" aria-label="Filter reviews">'+[["all","All"],["pending","Pending"],["replied","Replied"]].map(function(t){
+      return '<button class="tab" data-filter="'+t[0]+'" aria-pressed="'+(f===t[0])+'">'+t[1]+'</button>';}).join("")+'</div>';
+    return header("Inbox","Reviews",'Drafts here are pre-written samples. The live app generated them with Claude.',tabs)+
+      '<div class="list">'+(list.length?list.map(reviewCard).join(""):'<div class="card empty">All caught up — every review has a reply.</div>')+'</div>';
+  }
+
+  function renderBusinesses(){
+    var g='<svg width="24" height="24" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.2l7.9 6.2C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 2.9-2.2 5.4-4.7 7.1l7.6 5.9c4.4-4.1 6.9-10.1 6.9-17.5z"/><path fill="#FBBC05" d="M10.6 28.6A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.1.8-4.6l-7.9-6.2A24 24 0 0 0 0 24c0 3.9.9 7.5 2.7 10.8z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.2 0-11.5-4.1-13.4-9.9l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg>';
+    return header("Connected","Businesses","Google Business Profiles linked to this account")+
+      '<div class="card"><div class="biz"><div class="icon">'+g+'</div><div class="meta"><b>Copperleaf Kitchen</b><div class="sub">'+BASE_TOTAL+' reviews · last synced '+state.synced+'</div><div style="margin-top:6px"><span class="live">Monitoring</span></div></div>'+
+      '<button class="sbtn ghost" data-sync '+(state.syncing?"disabled":"")+'>'+(state.syncing?'<span class="spin">↻</span> Syncing…':"↻ Sync now")+'</button></div></div>';
+  }
+
+  function renderSettings(){
+    var tones=["Professional","Friendly","Formal","Empathetic"].map(function(t){return '<option'+(t===state.tone?" selected":"")+'>'+t+'</option>';}).join("");
+    return header("Account","Settings","Changes apply to this demo session only")+
+      '<div class="card"><div class="set"><div><b>Auto-reply mode</b><small>Post AI replies without manual approval</small></div>'+
+      '<button class="toggle" role="switch" aria-label="Auto-reply mode" aria-checked="'+state.autoReply+'" data-auto></button></div>'+
+      '<div class="set"><div><b>Reply tone</b><small>How the AI sounds in new drafts</small></div><select id="tone" aria-label="Reply tone">'+tones+'</select></div>'+
+      '<div class="set"><div><b>AI replies this month</b><small>Plan included 200</small></div><div style="display:flex;align-items:center;gap:10px"><div class="meter"><i style="width:'+(state.used/200*100)+'%"></i></div><small style="color:var(--muted)">'+state.used+' / 200</small></div></div></div>';
+  }
+
+  function render(){
+    var v=state.view, map={overview:renderOverview,reviews:renderReviews,businesses:renderBusinesses,settings:renderSettings};
+    view.innerHTML=map[v]();
+    document.getElementById("crumb").textContent=v==="overview"?"dashboard":v;
+    document.querySelectorAll(".nav").forEach(function(b){b.setAttribute("aria-current",String(b.dataset.view===v));});
+    var c=pending().length, nc=document.getElementById("navCount");
+    nc.textContent=c; nc.style.display=c?"":"none";
+  }
+
+  function go(v){state.view=v;render();}
+
+  function generate(id){
+    var r=reviews.find(function(x){return x.id===id;});
+    delete state.drafts[id]; state.typing[id]=""; render();
+    var full=r.reply, i=0;
+    (function tick(){
+      i=Math.min(full.length,i+3); state.typing[id]=full.slice(0,i);
+      var el=document.getElementById("type-"+id); if(el) el.textContent=state.typing[id];
+      if(i<full.length) setTimeout(tick,14);
+      else { delete state.typing[id]; state.drafts[id]=full; state.used++; render(); }
+    })();
+  }
+
+  function send(id){
+    var r=reviews.find(function(x){return x.id===id;}), ta=document.getElementById("ta-"+id);
+    var text=ta?ta.value.trim():"";
+    if(!text){toast("Add a reply before sending.");return;}
+    r.reply=text; r.status="replied"; delete state.drafts[id]; render();
+    toast("Reply posted for "+r.name.split(" ")[0]+" (demo — nothing was sent)");
+  }
+
+  document.addEventListener("click",function(e){
+    var t=e.target.closest("button"); if(!t) return;
+    if(t.dataset.view) return go(t.dataset.view);
+    if(t.dataset.go) return go(t.dataset.go);
+    if(t.dataset.filter){state.filter=t.dataset.filter;return render();}
+    if(t.dataset.gen) return generate(+t.dataset.gen);
+    if(t.dataset.send) return send(+t.dataset.send);
+    if(t.hasAttribute("data-auto")){state.autoReply=!state.autoReply;render();return toast("Auto-reply "+(state.autoReply?"on":"off")+" (demo)");}
+    if(t.hasAttribute("data-sync")){state.syncing=true;render();setTimeout(function(){state.syncing=false;state.synced="just now";render();toast("Synced · no new reviews");},1200);}
+  });
+  document.addEventListener("input",function(e){
+    var m=e.target.id&&e.target.id.match(/^ta-(\d+)$/); if(m) state.drafts[+m[1]]=e.target.value;
+  });
+  document.addEventListener("change",function(e){
+    if(e.target.id==="tone"){state.tone=e.target.value;toast("New drafts will use a "+state.tone.toLowerCase()+" tone");}
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
